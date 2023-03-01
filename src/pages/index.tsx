@@ -7,6 +7,7 @@ import {
   TextField,
   Typography,
   Button,
+  CircularProgress,
 } from "@mui/material";
 import { api } from "@/services/api";
 import { GetStaticProps } from "next";
@@ -41,6 +42,8 @@ export default function Home({ brands }: { brands: Brand[] }) {
   const [models, setModels] = useState<Model[]>([]);
   const [years, setYears] = useState<Year[]>([]);
 
+  const [loading, setLoading] = useState<boolean>(false);
+  const [disabled, setDisabled] = useState<boolean>(true);
   const router = useRouter();
 
   const handleBrandChange = (
@@ -59,6 +62,9 @@ export default function Home({ brands }: { brands: Brand[] }) {
         })
         .catch((error) => {
           console.error(error);
+        })
+        .finally(() => {
+          setDisabled(false);
         });
     } else {
       setSelectedBrand(null);
@@ -107,6 +113,7 @@ export default function Home({ brands }: { brands: Brand[] }) {
 
   const handleSubmit = () => {
     if (selectedBrand && selectedModel && selectedYear) {
+      setLoading(true);
       api
         .get<Dictionary<string | number>>(
           `/carros/marcas/${selectedBrand.codigo}/modelos/${selectedModel.codigo}/anos/${selectedYear.codigo}`
@@ -116,10 +123,13 @@ export default function Home({ brands }: { brands: Brand[] }) {
           const formattedData: FormattedResult = convertToFormattedResult(data);
           const formattedDataWithUpdate = { ...formattedData, updateValues };
           updateValues(formattedDataWithUpdate);
-          router.push("/result");
+          router.push("/result");    
         })
         .catch((error) => {
           console.error(error);
+        })
+        .finally(() => {
+          setLoading(false);
         });
     } else {
       console.log("Por favor, selecione uma marca, um modelo e um ano."); //colocar Snackbar
@@ -148,37 +158,41 @@ export default function Home({ brands }: { brands: Brand[] }) {
         >
           Consulte o valor de um veículo de forma gratuita
         </Typography>
-        <CardHome>
-          <AutoComplete
-            handle={handleBrandChange}
-            options={brands}
-            label="Marca"
-          />
-          <AutoComplete
-            handle={handleModelChange}
-            options={models}
-            label="Modelo"
-          />
-
-          {selectedBrand && selectedModel && (
+          <CardHome>
             <AutoComplete
-              handle={handleYearChange}
-              options={years}
-              label="Ano"
+              handle={handleBrandChange}
+              options={brands}
+              label="Marca"
             />
-          )}
-          <Grid item xs={12} sm={12} md={8} px={1}>
-            <Button
-              onClick={handleSubmit}
-              disabled={!selectedBrand || !selectedModel || !selectedYear}
-              variant="contained"
-              color="primary"
-              sx={{ width: "100%", textTransform: "initial", px: 4 }}
-            >
-              Consultar preço
-            </Button>
-          </Grid>
-        </CardHome>
+            <AutoComplete
+              disabled={disabled}
+              handle={handleModelChange}
+              options={models}
+              label="Modelo"
+            />
+
+            {selectedBrand && selectedModel && (
+              <AutoComplete
+                handle={handleYearChange}
+                options={years}
+                label="Ano"
+              />
+            )}
+            <Grid item xs={12} sm={12} md={8} px={1}>
+              <Button
+                onClick={handleSubmit}
+                disabled={
+                  !selectedBrand || !selectedModel || !selectedYear || loading
+                }
+                variant="contained"
+                color="primary"
+                sx={{ width: "100%", textTransform: "initial", px: 4 }}
+              >
+                {loading && <CircularProgress size={20} />}
+                Consultar preço
+              </Button>
+            </Grid>
+          </CardHome>
       </GridContainer>
     </>
   );

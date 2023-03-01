@@ -14,12 +14,14 @@ interface AutoCompleteProps {
   ) => void;
   options: Option[];
   label: string;
+  disabled?:boolean
 }
 
 export default function AutoComplete({
   handle,
   options,
   label,
+  disabled
 }: AutoCompleteProps) {
   return (
     <GridAutoComplete
@@ -29,6 +31,7 @@ export default function AutoComplete({
       sx={{ maxWidth: "500px", width: "100%", padding:'0 24px' }}
     >
       <Autocomplete
+      disabled={disabled}
         disablePortal
         options={options}
         getOptionLabel={(opt) => opt.nome}
